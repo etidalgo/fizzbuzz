@@ -128,12 +128,6 @@ var
 
     FOInstance: String;
 
-    prodUrl: String;
-    prodApiKey: String;
-    devUrl: String;
-    qaUrl: String;
-    devqaApiKey: String;
-
     fluxOnlineUrl: String;
     fluxOnlineApiKey: String;
 
@@ -142,36 +136,22 @@ var
     appSettingsFile: String;
     updateAppSettings: String;
 begin
+    Log('Scanning parameters for FluxOnline configuration');
     { FluxOnline values, tied to parameters }
     FOInstance := ExpandConstant('{param:FOInstance|default}');
 
-    { One-stop place for FluxOnline info }
-    prodUrl := 'https://prod.url.null.dev';
-    prodApiKey := 'Production Api Key';
-    devUrl := 'https://dev.url.null.dev';
-    qaUrl := 'https://qa.url.null.dev';
-    devqaApiKey := 'Dev/QA Api Key';
-
-    if ((FOInstance = 'prod') or (FOInstance = 'default')) then
+    if (FOInstance = 'default') then
     begin
-        fluxOnlineUrl := prodUrl;
-        fluxOnlineApiKey := prodApiKey;
-    end else if FOInstance = 'qa' then
-    begin
-        fluxOnlineUrl := qaUrl;
-        fluxOnlineApiKey := devqaApiKey;
-    end else if FOInstance = 'dev' then
-    begin
-        fluxOnlineUrl := devUrl;
-        fluxOnlineApiKey := devqaApiKey;
-    end else if FOInstance = 'custom' then
-    begin
-        { parameters were already validated }
-        fluxOnlineUrl := ExpandConstant('{param:FOUrl|default}');
-        fluxOnlineApiKey := ExpandConstant('{param:FOKey|default}');
+        Log('Using default FluxOnline configuration');
+        exit;
     end;
 
+    { parameters were validated in InitializeSetup() }
+    fluxOnlineUrl := ExpandConstant('{param:FOUrl|default}');
+    fluxOnlineApiKey := ExpandConstant('{param:FOKey|default}');
+
     Log('Configuring FluxOnline');
+    Log('- FOInstance: '+ FOInstance);
     Log('- Url: '+ fluxOnlineUrl);
     Log('- Api Key: '+ fluxOnlineApiKey);
 
@@ -179,13 +159,16 @@ begin
     appSettingsFile := appfolder + '\appsettings.json';
     tmp := ExpandConstant('{tmp}');
     ExtractTemporaryFiles('*.p*1');
-    updateAppSettings := tmp + '\UpdateAppSettings.ps1';
+    ExtractTemporaryFiles('*FOConfigurations.json');
+
+    updateAppSettings := tmp + '\ApplyFluxOnlineConfiguration.ps1';
     Log('Preparing to update app settings.');
     Exec('powershell.exe',
         '-ExecutionPolicy bypass -File "' + updateAppSettings + '" ' +
         '-AppSettingsFile "' + appSettingsFile + '" ' +
+        '-FluxConfiguration "' + FOInstance + '" ' +
         '-FluxApiUrl "' + fluxOnlineUrl + '" ' +
-        '-FluxApiKey "'+fluxOnlineApiKey+'"',
+        '-FluxApiKey "'+ fluxOnlineApiKey +'" ',
         '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 end;
 

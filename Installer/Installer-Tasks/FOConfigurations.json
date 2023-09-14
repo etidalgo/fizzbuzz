@@ -1,0 +1,10 @@
+{
+    "FluxConfig_QA": {
+        "FluxApiUrl": "qaUrl",
+        "FluxApiKey": "qaKey"
+    },
+    "FluxConfig_Dev": {
+        "FluxApiUrl": "devUrl",
+        "FluxApiKey": "devKey"
+    }
+}
